@@ -1,0 +1,180 @@
+멋한글(V. 2.1) 해독 프로젝트
+
+
+083C    jmp $1d0a
+        ;----------------
+        ;"&" 벡터 재정의
+        ;----------------
+083f    lda #$80
+        sta $e8     ; $e8.e9 shape table start address
+        ;
+        lda #$4c    ; #$4c --> JMPopcode
+        sta $03f5   ; $3F5.3F7 Ampersand ("&") vector (JMP $FF58)
+        ;           
+        lda $03f7   ; 기존 벡터값을 A, Y에 각각 읽어 옴
+        ldy $03f6    
+        cmp #$ff    ; 기존 벡터가 $ff58이면 재정의 루틴으로 
+        bne $0856
+        cpy #$58
+        beq $0864
+        ;
+0856    cmp #$08    ; 멋한글 자체 벡터값($0873)과 같으면 리턴
+        bne $085e
+        cpy #$73
+        beq $086e
+        ;
+085e    sty $0871   ; 기존 벡터값을 $871.872에 저장함
+        sta $0872
+        ;
+0864    ldx #$08    ; 멋한글의 벡터로 대체함
+        ldy #$73    ; (JMP $0873)
+        sty $03f6
+        stx $03f7
+        ;
+086e    rts         ; return          
+086f    brk
+        ;
+0870    jmp $0cff
+        ;
+        ;-------------------------
+        ; Ampersnad entry routine
+        ;-------------------------
+        ; After the JMP to here, the Applesoft TXTPTR (at $B8 and $B9)
+        ; points to the byte that follows the ampersand in memory, 
+        ; and the A register is loaded with the contents of that byte.
+0873    ldx #$12        ; 
+_next   cmp CMD_TBL, x  ; &이후에 나오는 문자가 CMD_TBL의 문자와 일차하면
+        beq _matched    ; _matched로 이동
+        dex             ; 순차적으로 일치 문자를 찾음
+        bpl _next       ;
+        bmi $0870       ; 일치하는 문자가 없으면 (jmp $0cff)
+_matched
+        txa         ; X --> A 
+        asl         ; 곱하기2
+        tax         ; A --> X
+_nextadr
+        lda $08aa, x    ; 각 심볼에 해당되는 서브루틴 주소를 스택에 저장
+        pha             ; 실제 실행은 SP에서 +1된 주소
+        lda $08a9, x    ;
+        pha             
+        cpx #$06        ; 만약 X < 6  (H, S, P) 이면 
+        bcc $08ce       ; $08ce로 이동
+        bne _rtsbasic   ; 만약 X > 6 (Z..@)이면 _rtsbasic로 분기
+        dex
+        dex             ; x = x -2
+        bne _nextadr    ; 
+_rtsbasic
+        jmp $00b1   ; $00B1 GET NEXT CHAR, UPDATE TXTPTR
+                    ; 위의 루틴내에 있는 RTS로 복귀됨
+
+CMD_TBL db $48 $53 $50 $5a $41     ; 'H', 'S', 'P', 'Z', 'A'
+        db $57 $4d $54 $52 $4b     ; 'W', 'M', 'T', 'R', 'K'
+        db $4c $43 $47 $46 $42     ; 'L', 'C', 'G', 'F', 'B'
+        db $49 $4e $c0             ; 'I', 'N', @(?)
+08aa.08ce ; 실재 저장된 값은 아래 값에서 -1이 된 것
+        ;      
+        ; 0  H --> $0cff
+        ; 1  S --> $0d02
+        ; 2  P --> $0fec
+        ; 3  Z --> $10b1
+        ; 4  A --> $1cf4
+        ; 5  W --> $16a6
+        ; 6  M --> $16e4
+        ; 7  T --> $1755
+        ; 8  R --> $172e
+        ; 9  K --> $19c1
+        ; a  L --> $1996
+        ; b  C --> $188d
+        ; c  G --> $18f1
+        ; d  F --> $109c
+        ; e  B --> $fbdd
+        ; f  I --> $10f4
+        ;10  N --> $1088
+        ;11  @ --> $1758
+08cd    brk
+08ce    jsr $00b1
+        beq $08f1   ; if  return
+....    
+
+
+
+
+0cff    jmp $0d08
+
+
+
+....
+
+0d08    jsr $0d11   ; 문자입출력 후크 재정의
+        ;
+0d0b    lda #$90    ; CTRL-P
+        jsr $fded   ; Acc의 값을 ASCII로 출력, 한글모드에서는 화면클리어
+        rts
+        ;------------------------
+        ; 문자입출력 후크 재정의
+        ;------------------------
+0d11    lda $0d38   ; $38 lo  Character input hook.
+        sta $38     ; $39 hi  Normally points to 9E81, the DOS input
+        lda $0d39   ;         handler (INPTINCP).
+        sta $39
+        ;
+        lda $0d3a   ; $36 lo  Character output hook.
+        sta $36     ; $37 hi  Normally points to 9EBD, the DOS output
+        lda $0d3b   ;         handler (OPUTINCP).
+        sta $37
+        jsr $03ea   ; Entry point: Install a character input hook. It
+                    ; takes parameters in $36-$39 = 54-57; if you haven't
+                    ; changed these locations since booting DOS then
+                    ; CALL 1002 will "reconnect" DOS
+        ;------------------------
+        ; 화면모드 정의
+        ; + 알파
+        ;------------------------
+        bit $c052   ; $C052 R/W	MIXEDOFF Use full screen for graphic
+        bit $c057   ; $C057 R/W	HIRESON	Select high resolution graphics
+        jsr $113a   
+        jsr $0fec   ; &P 와 동일
+        bit $c050   ; $C050 R/W	TEXTOFF	Select graphics mode
+        rts
+        ;
+
+0d36    db  lo_cout_old ; (INPTINCP)
+0d37    db  hi_cout_old
+0d38    db  lo_cin_old  ; (OPUTINCP)
+0d39    db  hi_cin_old
+
+....
+
+
+1118    lda $20     ; (entering TEXT....(N is 0-39; norm is 0) Text window left edge
+        adc $24
+        sta $24     ; Cursor's column position minus 1 (HTAB's place)
+        lda #$00
+        sta $20
+        sta $22
+        bit $0d48
+
+113a    lda #$00
+        ldy #$0a
+113e    sta $0d40, y
+        dey
+        bpl $113e
+        jmp $1118
+
+        
+1d0a    jsr $083f   ; "&"벡터 재정의 루틴 호출
+        ;
+        ldx #$53    ; LOMEM = #$1e53            
+        lda #$1e    ; $69.6a LOMEM; end of BASIC program and start of variable space
+        stx $69
+        sta $6a
+        ;
+        ldx #$61    ; Array 변수 시작/종료 주소 = #$1e61 
+        lda #$1e
+        stx $6b     ; $6B-$6C - Address of Beginning of BASIC Arrays
+        sta $6c
+        stx $6d     ; $6D-$6E - Address of End of BASIC Variables
+        sta $6e
+        ;
+1d21    jmp $0cff
+
