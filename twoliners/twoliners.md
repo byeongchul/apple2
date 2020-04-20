@@ -1,20 +1,22 @@
 # 옛 감성의 두 줄 프로그램
 
-* Applesoft BASIC으로 작성되어 있습니다.
+ * Applesoft BASIC으로 작성되어 있습니다.
 
 ## matrix scene 1a
 
->  3 text:home:dim p(15),d(15):def fn r(x)=int(x*RND(PEEK(78)+PEEK(79)*256))
->  7 fori=0to14: p(i)=1+fn r(39): d(i)=(3 < fn r(10)): next: forj=1to24: fori=0to14: vtabj: htabp(i): ? chr$(32+d(i) * fn r(64));:next:next:goto 7
+
+    3 text:home:dim p(15),d(15):def fn r(x)=int(x*RND(PEEK(78)+PEEK(79)*256))
+    7 fori=0to14: p(i)=1+fn r(39): d(i)=(3 < fn r(10)): next: forj=1to24: fori=0to14: vtabj: htabp(i): ? chr$(32+d(i) * fn r(64));:next:next:goto 7
+
 
 ## matrix scene 1
-  3 text:home:dim p(15),d(15)
-  7 fori=0to14:p(i)=1+int(39*RND(PEEK(78)+PEEK(79)*256)):d(i)=(3 < int(10*RND(PEEK(78)+PEEK(79)*256))):next:forj=1to24:fori=0to14:vtabj:htabp(i):?chr$(32+d(i)*int(64*RND(PEEK(78)+PEEK(79)*256)));:next:next:goto 7
+    3 text:home:dim p(15),d(15)
+    7 fori=0to14:p(i)=1+int(39*RND(PEEK(78)+PEEK(79)*256)):d(i)=(3 < int(10*RND(PEEK(78)+PEEK(79)*256))):next:forj=1to24:fori=0to14:vtabj:htabp(i):?chr$(32+d(i)*int(64*RND(PEEK(78)+PEEK(79)*256)));:next:next:goto 7
 
 ## 굴러가는 커서2
 
-  3 text:home:b$="+\|/-":t=0:speed=200
-  7 t=t+1:t=t*(t>=1 and t<=5)+(t>5):htab 19:? mid$(b$,t,1):goto 7
+    3 text:home:b$="+\|/-":t=0:speed=200
+    7 t=t+1:t=t*(t>=1 and t<=5)+(t>5):htab 19:? mid$(b$,t,1):goto 7
 
 3행 : 텍스트 모두에 화면클리어 하고, b$에는 굴러가는 커서의 스프라이트가 될 캐릭터를 저장합니다.
 캐릭터를 자르는 위치를 지정하 변수 t를 초기화합니다. 너무 빠르면 움직임이 보잊 않으니,
