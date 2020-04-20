@@ -3,8 +3,9 @@
 * Applesoft BASIC으로 작성되어 있습니다.
 
 ## matrix scene 1a
-  3 text:home:dim p(15),d(15):def fn r(x)=int(x*RND(PEEK(78)+PEEK(79)*256))
-  7 fori=0to14: p(i)=1+fn r(39): d(i)=(3 < fn r(10)): next: forj=1to24: fori=0to14: vtabj: htabp(i): ? chr$(32+d(i) * fn r(64));:next:next:goto 7
+
+>  3 text:home:dim p(15),d(15):def fn r(x)=int(x*RND(PEEK(78)+PEEK(79)*256))
+>  7 fori=0to14: p(i)=1+fn r(39): d(i)=(3 < fn r(10)): next: forj=1to24: fori=0to14: vtabj: htabp(i): ? chr$(32+d(i) * fn r(64));:next:next:goto 7
 
 ## matrix scene 1
   3 text:home:dim p(15),d(15)
